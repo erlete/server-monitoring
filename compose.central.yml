@@ -9,6 +9,8 @@ volumes:
   loki-data:
   alertmanager-data:
   grafana-data:
+  caddy-data:
+  caddy-config:
 
 services:
   prometheus:
@@ -81,5 +83,25 @@ services:
     depends_on:
       - prometheus
       - loki
+    networks:
+      - monitoring
+
+  caddy:
+    image: caddy:2.8-alpine
+    container_name: caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      DOMAIN: ${DOMAIN:?DOMAIN required}
+      CADDY_ACME_EMAIL: ${CADDY_ACME_EMAIL:-noreply@example.com}
+    volumes:
+      - ./central/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - grafana
     networks:
       - monitoring

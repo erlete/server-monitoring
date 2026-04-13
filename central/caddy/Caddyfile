@@ -1,0 +1,9 @@
+{
+  email {$CADDY_ACME_EMAIL}
+}
+
+{$DOMAIN} {
+  encode gzip
+  reverse_proxy grafana:3000
+  tls internal
+}
