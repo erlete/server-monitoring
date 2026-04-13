@@ -8,6 +8,7 @@ volumes:
   prometheus-data:
   loki-data:
   alertmanager-data:
+  grafana-data:
 
 services:
   prometheus:
@@ -59,5 +60,26 @@ services:
     volumes:
       - ./central/loki/loki-config.yml:/etc/loki/config.yml:ro
       - loki-data:/loki
+    networks:
+      - monitoring
+
+  grafana:
+    image: grafana/grafana:11.3.0
+    container_name: grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?GRAFANA_ADMIN_PASSWORD required}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_SERVER_ROOT_URL: https://${DOMAIN}
+      GF_INSTALL_PLUGINS: ""
+    volumes:
+      - ./central/grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      - prometheus
+      - loki
     networks:
       - monitoring
