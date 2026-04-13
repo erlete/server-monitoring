@@ -78,7 +78,7 @@ services:
       HOSTNAME_LABEL: ${HOSTNAME_LABEL:?HOSTNAME_LABEL required}
       REMOTE_WRITE_URL: ${REMOTE_WRITE_URL:?REMOTE_WRITE_URL required}
       LOKI_URL: ${LOKI_URL:?LOKI_URL required}
-      EXCLUDE_NAMES: ${EXCLUDE_NAMES:-^(alloy|cadvisor|docker-socket-proxy|docker-state-exporter|blackbox|prometheus|loki|grafana|alertmanager|caddy)$$}
+      EXCLUDE_NAMES: ${EXCLUDE_NAMES:-(alloy|cadvisor|docker-socket-proxy|docker-state-exporter|blackbox|prometheus|loki|grafana|alertmanager|caddy)}
     volumes:
       - ./agent/alloy/config.alloy:/etc/alloy/config.alloy:ro
       - alloy-data:/var/lib/alloy/data
