@@ -1,0 +1,57 @@
+# Test override: run alongside the main compose files to validate
+# the full pipeline locally.
+#
+# Usage:
+#   docker compose -f compose.central.yml -f compose.agent.yml -f compose.test.yml \
+#     --env-file .env.central up -d
+
+name: monitoring
+
+services:
+  # MailHog catches alertmanager SMTP traffic locally.
+  # Web UI at http://127.0.0.1:8025
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    container_name: mailhog
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8025:8025"  # web UI
+    networks:
+      - monitoring
+
+  # Dummy HTTP service — discovered, probed on port 80.
+  dummy-http:
+    image: nginxdemos/hello:plain-text
+    container_name: dummy-http
+    restart: unless-stopped
+    networks:
+      - monitoring
+
+  # Dummy TCP service — discovered, probed on port 6379.
+  dummy-redis:
+    image: redis:7-alpine
+    container_name: dummy-redis
+    restart: unless-stopped
+    networks:
+      - monitoring
+
+  # Dummy worker — no exposed ports. Only visible via
+  # docker-state-exporter's container_state_status metric.
+  dummy-worker:
+    image: busybox:1.36
+    container_name: dummy-worker
+    restart: unless-stopped
+    command: ["sh", "-c", "while true; do echo heartbeat; sleep 30; done"]
+    networks:
+      - monitoring
+
+  # Override alertmanager SMTP to point at MailHog (plain SMTP, no TLS).
+  alertmanager:
+    environment:
+      SMTP_HOST: mailhog
+      SMTP_PORT: "1025"
+      SMTP_USERNAME: ""
+      SMTP_PASSWORD: ""
+      SMTP_FROM: alerts@monitoring.local
+      ALERT_TO: oncall@monitoring.local
+      SMTP_REQUIRE_TLS: "false"
