@@ -1,0 +1,28 @@
+groups:
+  - name: container-health
+    interval: 30s
+    rules:
+      - alert: ContainerDown
+        # container_state_status is emitted by docker-state-exporter
+        # with a `status` label. Value == 1 when in that state, 0 otherwise.
+        # max by (host, container_name) of the "running" variant == 0 means
+        # the container is not currently running on any observed host.
+        expr: |
+          max by (host, container_name) (
+            container_state_status{status="running"}
+          ) == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Container {{ $labels.container_name }} on {{ $labels.host }} is down"
+          description: "Container has been in a non-running state for more than 2 minutes."
+
+      - alert: ProbeFailing
+        expr: probe_success == 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "TCP probe failing for {{ $labels.instance }} on {{ $labels.host }}"
+          description: "{{ $labels.container_name }} ({{ $labels.instance }}) has not responded to a TCP probe for 2 minutes."
