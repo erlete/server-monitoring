@@ -36,12 +36,12 @@ services:
     restart: unless-stopped
     entrypoint: ["/bin/sh", "/entrypoint.sh"]
     environment:
-      ALERT_TO: ${ALERT_TO}
-      SMTP_FROM: ${SMTP_FROM}
-      SMTP_HOST: ${SMTP_HOST}
-      SMTP_PORT: ${SMTP_PORT}
-      SMTP_USERNAME: ${SMTP_USERNAME}
-      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      ALERT_TO: ${ALERT_TO:?ALERT_TO required}
+      SMTP_FROM: ${SMTP_FROM:?SMTP_FROM required}
+      SMTP_HOST: ${SMTP_HOST:?SMTP_HOST required}
+      SMTP_PORT: ${SMTP_PORT:?SMTP_PORT required}
+      SMTP_USERNAME: ${SMTP_USERNAME:?SMTP_USERNAME required}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:?SMTP_PASSWORD required}
       SMTP_REQUIRE_TLS: ${SMTP_REQUIRE_TLS:-true}
     volumes:
       - ./central/alertmanager/alertmanager.yml.tmpl:/etc/alertmanager/alertmanager.yml.tmpl:ro

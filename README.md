@@ -154,6 +154,21 @@ bridges from each other by default). Alloy addresses it as
 on Linux via the `vm.docker.internal:host-gateway` alias in Alloy's
 `extra_hosts`. No further configuration is needed.
 
+### Windows / Docker Desktop caveat
+
+On Docker Desktop for Windows, the NAT between bridge-networked
+containers and the host-networked Blackbox exporter prevents Alloy from
+reaching `vm.docker.internal:9115`. In that environment `probe_success`
+metrics stay empty and the `ProbeFailing` alert never fires. Container
+uptime is still fully covered by `container_state_status` (via
+`docker-state-exporter`), so `ContainerDown` alerts and the Containers
+Overview status table work correctly — you only lose the per-port TCP
+probe layer.
+
+This does not affect Linux deployments, which are the intended production
+target. Use a Linux host (bare metal, VPS, or VM) for the complete
+feature set.
+
 ## Local testing
 
 `compose.test.yml` adds MailHog (SMTP catcher) and three dummy containers
