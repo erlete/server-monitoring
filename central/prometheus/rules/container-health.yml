@@ -3,19 +3,20 @@ groups:
     interval: 30s
     rules:
       - alert: ContainerDown
-        # container_state_status is emitted by docker-state-exporter
-        # with a `status` label. Value == 1 when in that state, 0 otherwise.
-        # max by (host, container_name) of the "running" variant == 0 means
-        # the container is not currently running on any observed host.
+        # container_state_status is emitted by docker-state-exporter with a
+        # `status` label (running|exited|paused|...) and `name` label holding
+        # the container name. Value == 1 when the container is in that state,
+        # 0 otherwise. The "running" variant == 0 means the container is not
+        # currently running on the host.
         expr: |
-          max by (host, container_name) (
+          max by (host, name) (
             container_state_status{status="running"}
           ) == 0
         for: 2m
         labels:
           severity: critical
         annotations:
-          summary: "Container {{ $labels.container_name }} on {{ $labels.host }} is down"
+          summary: "Container {{ $labels.name }} on {{ $labels.host }} is down"
           description: "Container has been in a non-running state for more than 2 minutes."
 
       - alert: ProbeFailing
@@ -25,4 +26,4 @@ groups:
           severity: warning
         annotations:
           summary: "TCP probe failing for {{ $labels.instance }} on {{ $labels.host }}"
-          description: "{{ $labels.container_name }} ({{ $labels.instance }}) has not responded to a TCP probe for 2 minutes."
+          description: "Probe target {{ $labels.instance }} has not responded to a TCP connect for 2 minutes."
