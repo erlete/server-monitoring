@@ -4,6 +4,9 @@ networks:
   monitoring:
     driver: bridge
 
+volumes:
+  alloy-data:
+
 services:
   docker-socket-proxy:
     image: tecnativa/docker-socket-proxy:0.3.0
@@ -59,5 +62,32 @@ services:
     image: prom/blackbox-exporter:v0.25.0
     container_name: blackbox
     restart: unless-stopped
+    networks:
+      - monitoring
+
+  alloy:
+    image: grafana/alloy:v1.5.0
+    container_name: alloy
+    restart: unless-stopped
+    command:
+      - run
+      - --server.http.listen-addr=0.0.0.0:12345
+      - --storage.path=/var/lib/alloy/data
+      - /etc/alloy/config.alloy
+    environment:
+      HOSTNAME_LABEL: ${HOSTNAME_LABEL:?HOSTNAME_LABEL required}
+      REMOTE_WRITE_URL: ${REMOTE_WRITE_URL:?REMOTE_WRITE_URL required}
+      LOKI_URL: ${LOKI_URL:?LOKI_URL required}
+      EXCLUDE_NAMES: ${EXCLUDE_NAMES:-^(alloy|cadvisor|docker-socket-proxy|docker-state-exporter|blackbox|prometheus|loki|grafana|alertmanager|caddy)$$}
+    volumes:
+      - ./agent/alloy/config.alloy:/etc/alloy/config.alloy:ro
+      - alloy-data:/var/lib/alloy/data
+    ports:
+      - "127.0.0.1:12345:12345"
+    depends_on:
+      - docker-socket-proxy
+      - cadvisor
+      - docker-state-exporter
+      - blackbox
     networks:
       - monitoring

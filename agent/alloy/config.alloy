@@ -1,0 +1,57 @@
+logging {
+  level  = "info"
+  format = "logfmt"
+}
+
+// ============================================================
+// Docker service discovery
+// ============================================================
+// Enumerates every running container on this host via the
+// read-only socket proxy. Zero labels required on monitored
+// containers.
+
+discovery.docker "containers" {
+  host             = "tcp://docker-socket-proxy:2375"
+  refresh_interval = "15s"
+}
+
+// ============================================================
+// Standard label pipeline
+// ============================================================
+// Drops excluded containers and attaches the canonical label
+// set used across all metrics and logs: host, container_name,
+// image, compose_project, compose_service.
+
+discovery.relabel "containers" {
+  targets = discovery.docker.containers.targets
+
+  // Drop containers matching the EXCLUDE_NAMES regex.
+  // Docker reports container names with a leading slash.
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/" + sys.env("EXCLUDE_NAMES")
+    action        = "drop"
+  }
+
+  // Strip the leading slash for the container_name label.
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(.*)"
+    target_label  = "container_name"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_label_com_docker_compose_project"]
+    target_label  = "compose_project"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_label_com_docker_compose_service"]
+    target_label  = "compose_service"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_label_org_opencontainers_image_title"]
+    target_label  = "image"
+  }
+}
