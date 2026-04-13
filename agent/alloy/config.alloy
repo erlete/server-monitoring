@@ -116,7 +116,7 @@ prometheus.scrape "blackbox" {
 // from env and fans out to remote_write (wired in Task 9).
 
 prometheus.relabel "add_host_label" {
-  forward_to = []  // Will be wired to remote_write in Task 9
+  forward_to = [prometheus.remote_write.central.receiver]
 
   rule {
     target_label = "host"
@@ -180,5 +180,15 @@ loki.relabel "add_host_label" {
 loki.write "central" {
   endpoint {
     url = sys.env("LOKI_URL")
+  }
+}
+
+// ============================================================
+// Central Prometheus remote_write
+// ============================================================
+
+prometheus.remote_write "central" {
+  endpoint {
+    url = sys.env("REMOTE_WRITE_URL")
   }
 }
