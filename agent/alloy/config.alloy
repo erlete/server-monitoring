@@ -123,3 +123,29 @@ prometheus.relabel "add_host_label" {
     replacement  = sys.env("HOSTNAME_LABEL")
   }
 }
+
+// ============================================================
+// cAdvisor scrape — per-container resource metrics
+// ============================================================
+
+prometheus.scrape "cadvisor" {
+  targets = [
+    { __address__ = "cadvisor:8080", job = "cadvisor" },
+  ]
+  forward_to      = [prometheus.relabel.add_host_label.receiver]
+  scrape_interval = "30s"
+}
+
+// ============================================================
+// docker-state-exporter scrape — container state for every
+// container including stopped ones (closes the "crashed
+// worker with no exposed ports" gap)
+// ============================================================
+
+prometheus.scrape "docker_state" {
+  targets = [
+    { __address__ = "docker-state-exporter:8080", job = "docker_state" },
+  ]
+  forward_to      = [prometheus.relabel.add_host_label.receiver]
+  scrape_interval = "30s"
+}
