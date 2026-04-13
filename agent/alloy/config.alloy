@@ -90,7 +90,7 @@ discovery.relabel "blackbox_targets" {
   // __param_target is the URL the exporter probes.
   rule {
     target_label = "__address__"
-    replacement  = "blackbox:9115"
+    replacement  = "vm.docker.internal:9115"
   }
 }
 

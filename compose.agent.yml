@@ -62,8 +62,7 @@ services:
     image: prom/blackbox-exporter:v0.25.0
     container_name: blackbox
     restart: unless-stopped
-    networks:
-      - monitoring
+    network_mode: host
 
   alloy:
     image: grafana/alloy:v1.5.0
@@ -84,6 +83,8 @@ services:
       - alloy-data:/var/lib/alloy/data
     ports:
       - "127.0.0.1:12345:12345"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       - docker-socket-proxy
       - cadvisor
