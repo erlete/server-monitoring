@@ -1,0 +1,13 @@
+# Env files with real secrets — only examples are committed
+.env.central
+.env.agent
+
+# Local state that should never be committed
+data/
+*.log
+
+# Editor / OS noise
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
