@@ -1,0 +1,106 @@
+{
+  "annotations": { "list": [] },
+  "editable": false,
+  "graphTooltip": 0,
+  "schemaVersion": 39,
+  "title": "Containers Overview",
+  "uid": "containers-overview",
+  "tags": ["monitoring", "containers"],
+  "timezone": "",
+  "time": { "from": "now-1h", "to": "now" },
+  "refresh": "30s",
+  "templating": {
+    "list": [
+      {
+        "name": "host",
+        "label": "Host",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "query": { "query": "label_values(up, host)", "refId": "host" },
+        "includeAll": true,
+        "multi": true,
+        "refresh": 2,
+        "sort": 1
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Container status (running = UP)",
+      "type": "table",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "max by (host, name) (container_state_status{status=\"running\", host=~\"$host\"})",
+          "format": "table",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "type": "value", "options": { "0": { "text": "DOWN", "color": "red" }, "1": { "text": "UP", "color": "green" } } }
+          ],
+          "custom": { "align": "left", "displayMode": "color-background" }
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 10, "w": 12, "x": 0, "y": 0 }
+    },
+    {
+      "id": 2,
+      "title": "TCP probe success",
+      "type": "table",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "probe_success{host=~\"$host\"}",
+          "format": "table",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "type": "value", "options": { "0": { "text": "FAIL", "color": "red" }, "1": { "text": "OK", "color": "green" } } }
+          ],
+          "custom": { "align": "left", "displayMode": "color-background" }
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 10, "w": 12, "x": 12, "y": 0 }
+    },
+    {
+      "id": 3,
+      "title": "CPU usage by container",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (host, name) (rate(container_cpu_usage_seconds_total{host=~\"$host\", name!=\"\"}[2m]))",
+          "legendFormat": "{{host}} / {{name}}"
+        }
+      ],
+      "gridPos": { "h": 10, "w": 12, "x": 0, "y": 10 }
+    },
+    {
+      "id": 4,
+      "title": "Memory usage by container",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (host, name) (container_memory_working_set_bytes{host=~\"$host\", name!=\"\"})",
+          "legendFormat": "{{host}} / {{name}}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "bytes" }, "overrides": [] },
+      "gridPos": { "h": 10, "w": 12, "x": 12, "y": 10 }
+    }
+  ]
+}
