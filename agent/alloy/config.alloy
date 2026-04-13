@@ -55,3 +55,71 @@ discovery.relabel "containers" {
     target_label  = "image"
   }
 }
+
+// ============================================================
+// Blackbox TCP probe targets
+// ============================================================
+// One probe target per (container, exposed private port).
+// TCP probes work universally — any protocol that opens a port
+// counts as "up".
+
+discovery.relabel "blackbox_targets" {
+  targets = discovery.relabel.containers.output
+
+  // Keep only targets that have a private port exposed.
+  rule {
+    source_labels = ["__meta_docker_port_private"]
+    regex         = ".+"
+    action        = "keep"
+  }
+
+  // Construct the probe target address: container IP + private port.
+  rule {
+    source_labels = ["__meta_docker_network_ip", "__meta_docker_port_private"]
+    separator     = ":"
+    target_label  = "__param_target"
+  }
+
+  // Surface the probed address as the `instance` label.
+  rule {
+    source_labels = ["__param_target"]
+    target_label  = "instance"
+  }
+
+  // Prometheus scrape semantics: __address__ is the exporter,
+  // __param_target is the URL the exporter probes.
+  rule {
+    target_label = "__address__"
+    replacement  = "blackbox:9115"
+  }
+}
+
+// ============================================================
+// Blackbox scrape
+// ============================================================
+// forward_to is wired up to remote_write in Task 9; for now,
+// send to the add_host_label stage which has an empty fanout.
+
+prometheus.scrape "blackbox" {
+  targets         = discovery.relabel.blackbox_targets.output
+  forward_to      = [prometheus.relabel.add_host_label.receiver]
+  scrape_interval = "30s"
+  scrape_timeout  = "10s"
+  metrics_path    = "/probe"
+  params          = { module = ["tcp_connect"] }
+}
+
+// ============================================================
+// Add host label to all metrics
+// ============================================================
+// Central entry point for all scrapes. Adds the hostname label
+// from env and fans out to remote_write (wired in Task 9).
+
+prometheus.relabel "add_host_label" {
+  forward_to = []  // Will be wired to remote_write in Task 9
+
+  rule {
+    target_label = "host"
+    replacement  = sys.env("HOSTNAME_LABEL")
+  }
+}
