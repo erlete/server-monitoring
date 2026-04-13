@@ -6,6 +6,7 @@ networks:
 
 volumes:
   prometheus-data:
+  loki-data:
 
 services:
   prometheus:
@@ -22,5 +23,20 @@ services:
       - ./central/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - ./central/prometheus/rules:/etc/prometheus/rules:ro
       - prometheus-data:/prometheus
+    networks:
+      - monitoring
+
+  loki:
+    image: grafana/loki:3.2.1
+    container_name: loki
+    restart: unless-stopped
+    command:
+      - -config.file=/etc/loki/config.yml
+      - -config.expand-env=true
+    environment:
+      LOKI_RETENTION: ${LOKI_RETENTION:-336h}
+    volumes:
+      - ./central/loki/loki-config.yml:/etc/loki/config.yml:ro
+      - loki-data:/loki
     networks:
       - monitoring
