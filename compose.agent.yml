@@ -84,7 +84,10 @@ services:
     ports:
       - "127.0.0.1:12345:12345"
     extra_hosts:
-      - "host.docker.internal:host-gateway"
+      # Resolves to the host-networked blackbox regardless of platform:
+      # Docker Desktop already provides vm.docker.internal, and host-gateway
+      # provides it on Linux hosts where it wouldn't otherwise exist.
+      - "vm.docker.internal:host-gateway"
     depends_on:
       - docker-socket-proxy
       - cadvisor
