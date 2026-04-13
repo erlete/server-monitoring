@@ -7,6 +7,7 @@ networks:
 volumes:
   prometheus-data:
   loki-data:
+  alertmanager-data:
 
 services:
   prometheus:
@@ -23,6 +24,26 @@ services:
       - ./central/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - ./central/prometheus/rules:/etc/prometheus/rules:ro
       - prometheus-data:/prometheus
+    networks:
+      - monitoring
+
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    container_name: alertmanager
+    restart: unless-stopped
+    entrypoint: ["/bin/sh", "/entrypoint.sh"]
+    environment:
+      ALERT_TO: ${ALERT_TO}
+      SMTP_FROM: ${SMTP_FROM}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_USERNAME: ${SMTP_USERNAME}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      SMTP_REQUIRE_TLS: ${SMTP_REQUIRE_TLS:-true}
+    volumes:
+      - ./central/alertmanager/alertmanager.yml.tmpl:/etc/alertmanager/alertmanager.yml.tmpl:ro
+      - ./central/alertmanager/entrypoint.sh:/entrypoint.sh:ro
+      - alertmanager-data:/alertmanager
     networks:
       - monitoring
 
