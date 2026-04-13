@@ -149,3 +149,36 @@ prometheus.scrape "docker_state" {
   forward_to      = [prometheus.relabel.add_host_label.receiver]
   scrape_interval = "30s"
 }
+
+// ============================================================
+// Docker log collection
+// ============================================================
+// Tails stdout/stderr of every discovered container and
+// pushes to central Loki with the same canonical label set.
+
+loki.source.docker "containers" {
+  host             = "tcp://docker-socket-proxy:2375"
+  targets          = discovery.relabel.containers.output
+  forward_to       = [loki.relabel.add_host_label.receiver]
+  refresh_interval = "15s"
+}
+
+// Add host label and fan out to loki.write.
+loki.relabel "add_host_label" {
+  forward_to = [loki.write.central.receiver]
+
+  rule {
+    target_label = "host"
+    replacement  = sys.env("HOSTNAME_LABEL")
+  }
+}
+
+// ============================================================
+// Central Loki push
+// ============================================================
+
+loki.write "central" {
+  endpoint {
+    url = sys.env("LOKI_URL")
+  }
+}
